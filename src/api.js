@@ -1,10 +1,14 @@
 import axios from "axios";
 
-
 export const API = axios.create({
-baseURL: "https://asoka-backend-production.up.railway.app",
+  baseURL: "https://asoka-backend-production.up.railway.app",
 });
 
+API.interceptors.request.use((req) => {
+  const token = localStorage.getItem("token");
+  if (token) req.headers.Authorization = token;
+  return req;
+});
 
 export const getPatients = () => API.get("/patients");
 export const addPatient = (data) => API.post("/patients", data);
