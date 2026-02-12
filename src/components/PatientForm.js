@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-export default function PatientForm({ onSubmit, selected, clearSelection }) {
+export default function PatientForm({ onSubmit, selected, clearSelection, onClose }) {
   const emptyFirstVisit = {
     date: "",
     height: "",
@@ -110,7 +110,7 @@ export default function PatientForm({ onSubmit, selected, clearSelection }) {
   };
 
   return (
-    <div className="card">
+    <div className="card modal-form-card">
       <h2>{selected ? "Edit Patient" : "Add Patient"}</h2>
 
       <form onSubmit={handleSubmit} className="form-stack">
@@ -169,6 +169,12 @@ export default function PatientForm({ onSubmit, selected, clearSelection }) {
           {selected && (
             <button type="button" className="btn btn-secondary" onClick={clearSelection}>
               Cancel
+            </button>
+          )}
+
+          {onClose && (
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Close
             </button>
           )}
         </div>

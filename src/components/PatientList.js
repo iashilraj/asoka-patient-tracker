@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 
 export default function PatientList({
   patients,
+  onView,
   onEdit,
   onDelete,
   onManageVisits,
@@ -53,6 +54,18 @@ export default function PatientList({
           </div>
 
           <div className="actions">
+            {onView && (
+              <button
+                className="btn btn-secondary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onView(p);
+                }}
+              >
+                View
+              </button>
+            )}
+
             <button
               className="btn btn-secondary"
               onClick={(e) => {
@@ -71,7 +84,7 @@ export default function PatientList({
                   onManageVisits(p);
                 }}
               >
-                Manage Visits
+                Visit
               </button>
             )}
 

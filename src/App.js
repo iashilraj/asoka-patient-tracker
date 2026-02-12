@@ -16,6 +16,9 @@ export default function App() {
   const [patients, setPatients] = useState([]);
   const [selected, setSelected] = useState(null);
   const [visitPatient, setVisitPatient] = useState(null);
+  const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
+  const [viewedPatient, setViewedPatient] = useState(null);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [activePatientId, setActivePatientId] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(
     !!localStorage.getItem("token")
@@ -35,6 +38,7 @@ export default function App() {
     else await addPatient(data);
 
     setSelected(null);
+    setIsFormModalOpen(false);
     loadPatients();
   };
 
@@ -49,11 +53,32 @@ export default function App() {
   const handleEditPatient = (patient) => {
     setSelected(patient);
     setActivePatientId(patient._id);
+    setIsFormModalOpen(true);
+  };
+
+  const handleViewPatient = (patient) => {
+    setViewedPatient(patient);
+    setActivePatientId(patient._id);
   };
 
   const handleManageVisits = (patient) => {
     setVisitPatient(patient);
     setActivePatientId(patient._id);
+    setIsVisitModalOpen(true);
+  };
+
+  const closeVisitModal = () => {
+    setIsVisitModalOpen(false);
+  };
+
+  const openAddPatientModal = () => {
+    setSelected(null);
+    setIsFormModalOpen(true);
+  };
+
+  const closePatientModal = () => {
+    setIsFormModalOpen(false);
+    setSelected(null);
   };
 
   const handlePatientUpdated = (updatedPatient) => {
@@ -99,25 +124,38 @@ export default function App() {
             <h1>Asoka Homoeo Clinic</h1>
           </div>
 
-          <button
-            className="btn btn-secondary"
-            onClick={() => {
-              localStorage.removeItem("token");
-              setIsLoggedIn(false);
-            }}
-          >
-            Logout
-          </button>
+          <div className="topbar-actions">
+            <button className="btn btn-primary" onClick={openAddPatientModal}>
+              Add Patient
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                localStorage.removeItem("token");
+                setIsLoggedIn(false);
+              }}
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
-        <PatientForm
-          onSubmit={handleSubmit}
-          selected={selected}
-          clearSelection={() => setSelected(null)}
-        />
+        {isFormModalOpen && (
+          <div className="modal-overlay" onClick={closePatientModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <PatientForm
+                onSubmit={handleSubmit}
+                selected={selected}
+                clearSelection={() => setSelected(null)}
+                onClose={closePatientModal}
+              />
+            </div>
+          </div>
+        )}
 
         <PatientList
           patients={patients}
+          onView={handleViewPatient}
           onEdit={handleEditPatient}
           onDelete={handleDelete}
           onManageVisits={handleManageVisits}
@@ -126,7 +164,29 @@ export default function App() {
           onSelectPatient={(patient) => setActivePatientId(patient._id)}
         />
 
-        <VisitManager patient={visitPatient} onPatientUpdated={handlePatientUpdated} />
+        {viewedPatient && (
+          <div className="card">
+            <h2>Patient View</h2>
+            <div className="form-grid">
+              <p><strong>Name:</strong> {viewedPatient.name || "-"}</p>
+              <p><strong>Mobile:</strong> {viewedPatient.mobile || "-"}</p>
+              <p><strong>Ref ID:</strong> {viewedPatient.refId || "-"}</p>
+              <p><strong>Age / Sex:</strong> {viewedPatient.age || "-"} / {viewedPatient.sex || "-"}</p>
+            </div>
+          </div>
+        )}
+
+        {isVisitModalOpen && visitPatient && (
+          <div className="modal-overlay" onClick={closeVisitModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <VisitManager
+                patient={visitPatient}
+                onPatientUpdated={handlePatientUpdated}
+                onClose={closeVisitModal}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

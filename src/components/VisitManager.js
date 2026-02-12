@@ -41,7 +41,7 @@ function normalizeVisitForUI(visit = {}) {
   };
 }
 
-export default function VisitManager({ patient, onPatientUpdated }) {
+export default function VisitManager({ patient, onPatientUpdated, onClose }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingVisitId, setEditingVisitId] = useState(null);
   const [form, setForm] = useState(emptyVisit);
@@ -168,9 +168,16 @@ export default function VisitManager({ patient, onPatientUpdated }) {
           </p>
         </div>
 
-        <button type="button" className="btn btn-primary" onClick={handleAddNewClick}>
-          Add Visit
-        </button>
+        <div className="actions">
+          <button type="button" className="btn btn-primary" onClick={handleAddNewClick}>
+            Add Visit
+          </button>
+          {onClose && (
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Close
+            </button>
+          )}
+        </div>
       </div>
 
       {visits.length === 0 && <p className="empty-state">No visits yet for this patient.</p>}
