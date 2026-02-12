@@ -24,10 +24,11 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="card">
+    <div className="card login-card">
+      <p className="eyebrow">Welcome back</p>
       <h2>Staff Login</h2>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="form-stack">
         <input
           placeholder="Username"
           value={username}
@@ -43,10 +44,12 @@ export default function Login({ onLogin }) {
           required
         />
 
-        <button type="submit">Login</button>
+        <button type="submit" className="btn btn-primary">
+          Login
+        </button>
       </form>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="error-text">{error}</p>}
     </div>
   );
 }
