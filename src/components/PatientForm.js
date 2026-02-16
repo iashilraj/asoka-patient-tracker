@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from "react";
 
+function calculateAgeFromDob(dobValue) {
+  if (!dobValue) return "";
+  const dob = new Date(dobValue);
+  if (Number.isNaN(dob.getTime())) return "";
+
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age -= 1;
+  }
+
+  return age >= 0 ? String(age) : "";
+}
+
 export default function PatientForm({ onSubmit, selected, clearSelection, onClose }) {
   const emptyFirstVisit = {
     date: "",
@@ -38,6 +54,9 @@ export default function PatientForm({ onSubmit, selected, clearSelection, onClos
   };
 
   const [form, setForm] = useState(emptyForm);
+  const [formError, setFormError] = useState("");
+
+  const todayISO = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     if (selected) {
@@ -65,8 +84,17 @@ export default function PatientForm({ onSubmit, selected, clearSelection, onClos
     } else {
       setForm(emptyForm);
     }
+    setFormError("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
+
+  useEffect(() => {
+    const autoAge = calculateAgeFromDob(form.dob);
+    if (autoAge !== form.age) {
+      setForm((prev) => ({ ...prev, age: autoAge }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.dob]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -81,6 +109,37 @@ export default function PatientForm({ onSubmit, selected, clearSelection, onClos
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const mobileOk = /^\d{10}$/.test(String(form.mobile || "").trim());
+    const emailOk =
+      !String(form.email || "").trim() ||
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(form.email || "").trim());
+    const feeOk =
+      !String(form.firstVisit.fee || "").trim() ||
+      (!Number.isNaN(Number(form.firstVisit.fee)) && Number(form.firstVisit.fee) >= 0);
+
+    if (!String(form.name || "").trim()) {
+      setFormError("Patient name is required.");
+      return;
+    }
+
+    if (!mobileOk) {
+      setFormError("Mobile must be exactly 10 digits.");
+      return;
+    }
+
+    if (!emailOk) {
+      setFormError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!feeOk) {
+      setFormError("Consultation fee must be a valid non-negative number.");
+      return;
+    }
+
+    setFormError("");
+
     const payload = {
       ...form,
       visits: [
@@ -119,12 +178,12 @@ export default function PatientForm({ onSubmit, selected, clearSelection, onClos
 
           <div className="form-grid">
             <input name="name" placeholder="Patient Name" value={form.name} onChange={handleChange} required />
-            <input name="age" placeholder="Age" value={form.age} onChange={handleChange} />
+            <input name="age" placeholder="Age (auto)" value={form.age} readOnly />
             <input name="sex" placeholder="Sex" value={form.sex} onChange={handleChange} />
-            <input name="dob" placeholder="DOB" value={form.dob} onChange={handleChange} />
+            <input type="date" name="dob" placeholder="DOB" value={form.dob} onChange={handleChange} max={todayISO} />
             <input name="address" placeholder="Address" value={form.address} onChange={handleChange} />
-            <input name="mobile" placeholder="Mobile" value={form.mobile} onChange={handleChange} />
-            <input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
+            <input name="mobile" placeholder="Mobile" value={form.mobile} onChange={handleChange} maxLength={10} required />
+            <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} />
             <input name="refId" placeholder="Patient Ref ID" value={form.refId} onChange={handleChange} />
             <input name="guardianName" placeholder="Guardian / Spouse Name" value={form.guardianName} onChange={handleChange} />
             <input name="idProof" placeholder="ID Proof" value={form.idProof} onChange={handleChange} />
@@ -144,7 +203,7 @@ export default function PatientForm({ onSubmit, selected, clearSelection, onClos
         <div className="section-card">
           <h3 className="section-title">Prescription (Initial Visit)</h3>
 
-          <input name="date" placeholder="Visit Date" value={form.firstVisit.date} onChange={handleVisitChange} />
+          <input type="date" name="date" placeholder="Visit Date" value={form.firstVisit.date} onChange={handleVisitChange} max={todayISO} />
 
           <div className="form-grid">
             <input name="height" placeholder="Height" value={form.firstVisit.height} onChange={handleVisitChange} />
@@ -157,10 +216,12 @@ export default function PatientForm({ onSubmit, selected, clearSelection, onClos
 
           <textarea name="symptoms" placeholder="Presenting Symptoms" value={form.firstVisit.symptoms} onChange={handleVisitChange} />
           <textarea name="prescription" placeholder="Prescription (Medicine, dosage, repetition)" value={form.firstVisit.prescription} onChange={handleVisitChange} />
-          <input name="fee" placeholder="Consultation Fee" value={form.firstVisit.fee} onChange={handleVisitChange} />
+          <input type="number" min="0" step="0.01" name="fee" placeholder="Consultation Fee" value={form.firstVisit.fee} onChange={handleVisitChange} />
           <input name="labReportUrl" placeholder="Lab Report URL" value={form.firstVisit.labReportUrl} onChange={handleVisitChange} />
           <input name="doctorSignUrl" placeholder="Doctor Sign URL" value={form.firstVisit.doctorSignUrl} onChange={handleVisitChange} />
         </div>
+
+        {formError && <p className="error-text">{formError}</p>}
 
         {/* ===== Buttons ===== */}
         <div className="actions">

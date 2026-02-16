@@ -48,6 +48,9 @@ export default function VisitManager({ patient, onPatientUpdated, onClose }) {
   const [uploadingLab, setUploadingLab] = useState(false);
   const [uploadingSignature, setUploadingSignature] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [formError, setFormError] = useState("");
+
+  const todayISO = new Date().toISOString().split("T")[0];
 
   const visits = useMemo(() => {
     if (!patient) return [];
@@ -63,6 +66,7 @@ export default function VisitManager({ patient, onPatientUpdated, onClose }) {
     setUploadingLab(false);
     setUploadingSignature(false);
     setUploadError("");
+    setFormError("");
   };
 
   const handleFieldChange = (e) => {
@@ -91,6 +95,22 @@ export default function VisitManager({ patient, onPatientUpdated, onClose }) {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!patient) return;
+
+    const feeOk =
+      !String(form.fee || "").trim() ||
+      (!Number.isNaN(Number(form.fee)) && Number(form.fee) >= 0);
+
+    if (!String(form.date || "").trim()) {
+      setFormError("Visit date is required.");
+      return;
+    }
+
+    if (!feeOk) {
+      setFormError("Consultation fee must be a valid non-negative number.");
+      return;
+    }
+
+    setFormError("");
 
     let res;
     if (editingVisitId) {
@@ -211,7 +231,7 @@ export default function VisitManager({ patient, onPatientUpdated, onClose }) {
         <form onSubmit={handleSave} className="form-stack visit-form section-card">
           <h3 className="section-title">{editingVisitId ? "Edit Visit" : "Add Visit"}</h3>
 
-          <input name="date" placeholder="Visit Date" value={form.date} onChange={handleFieldChange} />
+          <input type="date" name="date" placeholder="Visit Date" value={form.date} onChange={handleFieldChange} max={todayISO} required />
 
           <div className="form-grid">
             <input name="height" placeholder="Height" value={form.vitals.height} onChange={handleVitalChange} />
@@ -231,7 +251,7 @@ export default function VisitManager({ patient, onPatientUpdated, onClose }) {
               value={form.prescription}
               onChange={handleFieldChange}
             />
-            <input name="fee" placeholder="Consultation Fee" value={form.fee} onChange={handleFieldChange} />
+            <input type="number" min="0" step="0.01" name="fee" placeholder="Consultation Fee" value={form.fee} onChange={handleFieldChange} />
           </div>
 
           <div className="upload-block">
@@ -270,6 +290,7 @@ export default function VisitManager({ patient, onPatientUpdated, onClose }) {
           />
 
           {uploadError && <p className="error-text">{uploadError}</p>}
+          {formError && <p className="error-text">{formError}</p>}
 
           <div className="actions">
             <button type="submit" className="btn btn-primary">
